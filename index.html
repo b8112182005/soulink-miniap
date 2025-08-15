@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Soulink Mini App</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>Soulink Mini App</h1>
+    <p>Your Soul. Your Beast. Your Battle.</p>
+  </header>
+  <main>
+    <section id="intro-section">
+      <h2>Mint Your Soul Beast NFT</h2>
+      <p>This mini app runs inside World App. Fill in details or auto-complete and mint your beast on World Chain testnet.</p>
+    </section>
+    <section id="form-section">
+      <form id="beast-form">
+        <div class="field-group">
+          <label for="beast-name">Name <span class="required">*</span></label>
+          <input type="text" id="beast-name" required>
+        </div>
+        <div class="field-group">
+          <label for="tagline">Tagline <span class="required">*</span></label>
+          <input type="text" id="tagline" maxlength="120" required>
+        </div>
+        <div class="field-group">
+          <label for="appearance">Appearance Description</label>
+          <textarea id="appearance" rows="2"></textarea>
+        </div>
+        <div class="field-group">
+          <label for="skill1">Skill 1</label>
+          <input type="text" id="skill1">
+        </div>
+        <div class="field-group">
+          <label for="skill2">Skill 2</label>
+          <input type="text" id="skill2">
+        </div>
+        <div class="field-group">
+          <label for="temper">Temper</label>
+          <input type="text" id="temper">
+        </div>
+        <div class="field-group">
+          <label for="element">Element <span class="required">*</span></label>
+          <select id="element" required>
+            <option value="">Select element</option>
+            <option value="Aether">Aether</option>
+            <option value="Flame">Flame</option>
+            <option value="Frost">Frost</option>
+            <option value="Storm">Storm</option>
+            <option value="Terra">Terra</option>
+            <option value="Shadow">Shadow</option>
+          </select>
+        </div>
+        <div class="field-group">
+          <label for="rarity">Rarity</label>
+          <select id="rarity">
+            <option value="Common">Common</option>
+            <option value="Rare">Rare</option>
+            <option value="Epic">Epic</option>
+            <option value="Legendary">Legendary</option>
+          </select>
+        </div>
+        <div class="field-group">
+          <label for="beast-image">Beast Image <span class="required">*</span></label>
+          <input type="file" id="beast-image" accept="image/*" required>
+        </div>
+        <div class="actions">
+          <button type="button" id="autofill-btn">AI Auto Complete</button>
+          <button type="submit" id="mint-btn">Mint NFT</button>
+        </div>
+      </form>
+      <div id="preview-section" class="hidden">
+        <h3>Beast Preview</h3>
+        <div id="preview-card">
+          <img id="preview-image" alt="Preview" />
+          <div class="preview-info">
+            <h4 id="preview-name"></h4>
+            <p id="preview-tagline"></p>
+            <ul id="preview-list"></ul>
+          </div>
+        </div>
+      </div>
+      <div id="mint-result" class="hidden">
+        <p id="mint-message"></p>
+      </div>
+    </section>
+  </main>
+  <footer>
+    <p>&copy; 2025 Soulink. All rights reserved.</p>
+  </footer>
+
+  <!-- Load the MiniKit library via CDN only when running inside World App -->
+  <script type="module">
+    // Use dynamic import to avoid errors when loaded outside of World App
+    let MiniKit;
+    try {
+      MiniKit = await import('https://cdn.jsdelivr.net/npm/@worldcoin/minikit-js@0.0.7/+esm');
+    } catch (err) {
+      console.log('MiniKit could not be loaded:', err);
+    }
+
+    const randomValues = () => {
+      const names = ['Xin-Yan // 炘焰','Luma-Core // 琉光','Storm-Eye // 風眸','Terra-Wolf // 土狼'];
+      const taglines = ['Born of restraint, tempered by duty.','Forged in light, destined for greatness.','Eye of the storm, heart of calm.','Grounded yet fierce. Protector of the realm.'];
+      const appearances = ['Blue-white inner flame, wolf-tiger body, heterochromia eyes.','Luminous scales and shimmering fur, with a glowing core.','Sleek beast with glowing eyes and whirlwind fur.','Earth-toned fur and crystalline spikes, emanating strength.'];
+      const skills = [
+        { name: 'Soul-Ignite', effect: 'Ignite your soul to deal bonus damage in PvE.' },
+        { name: 'Truth-Sense', effect: 'Reveal hidden motives of opponents in PvP.' },
+        { name: 'Aether Shield', effect: 'Generate a shield that absorbs damage.' },
+        { name: 'Terra Slam', effect: 'Deliver a crushing slam with earth energy.' }
+      ];
+      const temperaments = ['Stoic','Fierce','Calm','Reckless'];
+      const elements = ['Aether','Flame','Frost','Storm','Terra','Shadow'];
+      const rarities = ['Common','Rare','Epic','Legendary'];
+      return {
+        name: names[Math.floor(Math.random()*names.length)],
+        tagline: taglines[Math.floor(Math.random()*taglines.length)],
+        appearance: appearances[Math.floor(Math.random()*appearances.length)],
+        skill1: skills[Math.floor(Math.random()*skills.length)],
+        skill2: skills[Math.floor(Math.random()*skills.length)],
+        temper: temperaments[Math.floor(Math.random()*temperaments.length)],
+        element: elements[Math.floor(Math.random()*elements.length)],
+        rarity: rarities[Math.floor(Math.random()*rarities.length)]
+      };
+    };
+
+    // Setup event handlers once DOM is ready
+    document.addEventListener('DOMContentLoaded', () => {
+      const form = document.getElementById('beast-form');
+      const autofillBtn = document.getElementById('autofill-btn');
+      const previewSection = document.getElementById('preview-section');
+      const previewImage = document.getElementById('preview-image');
+      const previewName = document.getElementById('preview-name');
+      const previewTagline = document.getElementById('preview-tagline');
+      const previewList = document.getElementById('preview-list');
+      const mintResult = document.getElementById('mint-result');
+      const mintMessage = document.getElementById('mint-message');
+
+      autofillBtn.addEventListener('click', () => {
+        const data = randomValues();
+        document.getElementById('beast-name').value = data.name;
+        document.getElementById('tagline').value = data.tagline;
+        document.getElementById('appearance').value = data.appearance;
+        document.getElementById('skill1').value = `${data.skill1.name} / ${data.skill1.effect}`;
+        document.getElementById('skill2').value = `${data.skill2.name} / ${data.skill2.effect}`;
+        document.getElementById('temper').value = data.temper;
+        document.getElementById('element').value = data.element;
+        document.getElementById('rarity').value = data.rarity;
+      });
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        // Build metadata from form fields
+        const name = document.getElementById('beast-name').value.trim();
+        const tagline = document.getElementById('tagline').value.trim();
+        const appearance = document.getElementById('appearance').value.trim();
+        const skill1 = document.getElementById('skill1').value.trim();
+        const skill2 = document.getElementById('skill2').value.trim();
+        const temper = document.getElementById('temper').value.trim();
+        const element = document.getElementById('element').value;
+        const rarity = document.getElementById('rarity').value;
+        const fileInput = document.getElementById('beast-image');
+        const file = fileInput.files[0];
+        if (!file) {
+          alert('Please upload an image.');
+          return;
+        }
+        // Preview image
+        const reader = new FileReader();
+        reader.onload = function() {
+          previewImage.src = reader.result;
+        };
+        reader.readAsDataURL(file);
+        // Display preview info
+        previewName.textContent = name;
+        previewTagline.textContent = tagline;
+        const list = [];
+        list.push(`<li><strong>Element:</strong> ${element}</li>`);
+        list.push(`<li><strong>Temper:</strong> ${temper || 'N/A'}</li>`);
+        list.push(`<li><strong>Rarity:</strong> ${rarity}</li>`);
+        if (appearance) list.push(`<li><strong>Appearance:</strong> ${appearance}</li>`);
+        if (skill1) list.push(`<li><strong>Skill 1:</strong> ${skill1}</li>`);
+        if (skill2) list.push(`<li><strong>Skill 2:</strong> ${skill2}</li>`);
+        previewList.innerHTML = list.join('');
+        previewSection.classList.remove('hidden');
+        mintResult.classList.remove('hidden');
+        mintMessage.textContent = 'Processing transaction...';
+        // Upload image and metadata to IPFS (this part should be implemented via your backend)
+        // For demonstration we skip and use placeholder URI
+        const tokenURI = 'ipfs://your-cid-placeholder';
+        // Build transaction for minting (to be replaced with your contract details)
+        if (MiniKit && MiniKit.isInstalled()) {
+          try {
+            const contractAddress = '0xYourNFTContractAddress';
+            const abi = [
+              {
+                "inputs": [
+                  {
+                    "internalType": "address",
+                    "name": "to",
+                    "type": "address"
+                  },
+                  {
+                    "internalType": "string",
+                    "name": "uri",
+                    "type": "string"
+                  }
+                ],
+                "name": "mintTo",
+                "outputs": [],
+                "stateMutability": "nonpayable",
+                "type": "function"
+              }
+            ];
+            const account = await MiniKit.commandsAsync.getAddress();
+            const { commandPayload } = await MiniKit.commandsAsync.sendTransaction({
+              transaction: [
+                {
+                  address: contractAddress,
+                  abi: abi,
+                  functionName: 'mintTo',
+                  args: [account.address || account, tokenURI],
+                },
+              ],
+            });
+            mintMessage.textContent = 'Transaction sent! Check your wallet.';
+          } catch (err) {
+            console.error(err);
+            mintMessage.textContent = 'Error sending transaction: ' + err.message;
+          }
+        } else {
+          // If not inside World App, just display success message
+          mintMessage.textContent = 'Success! Preview minted (simulation).';
+        }
+      });
+    });
+  </script>
+  <script src="script.js"></script>
+</body>
+</html>
